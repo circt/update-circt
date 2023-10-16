@@ -2,13 +2,13 @@ ${ commit-message() }
 
 
 $if(commits)$
-The following $commits/length$ commit(s) was/were automatically cherry-picked from the `ci/ci-circt-nightly` branch:
+The following $commits/length$ commit(s) was/were automatically cherry-picked from the $stagingBranch$ branch:
 
 $for(commits)$
   - [$it.title$](https://github.com/chipsalliance/chisel/commit/$it.checksum$)
 $endfor$
 $else$
-There were no commits that were cherry-picked from the `ci/ci-circt-nightly` branch.
+There were no commits that were cherry-picked from the $stagingBranch$ branch.
 $endif$
 
 #### Release Notes
