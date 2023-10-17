@@ -1,5 +1,8 @@
 name: 'Update CIRCT'
 description: 'Update the version of llvm/circt used by a downstream project'
+branding:
+  icon: 'git-pull-request'
+  color: 'green'
 
 inputs:
   user:
