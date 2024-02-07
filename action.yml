@@ -187,7 +187,7 @@ runs:
         done
 
         cd downstream/
-        if [[ `git rev-parse --verify ${{ inputs.staging-branch }} 2> /dev/null` ]]; then
+        if [[ `git rev-parse --verify origin/${{ inputs.staging-branch }} 2> /dev/null` ]]; then
           MERGE_BASE=$(git merge-base HEAD origin/${{ inputs.staging-branch }})
           COMMITS=$(git rev-list --reverse $MERGE_BASE..origin/${{ inputs.staging-branch }})
           for commit in $COMMITS; do
