@@ -36,6 +36,15 @@ binaries/libraries in a downstream project.
     # Default: './etc/circt.json'
     circt-config: ''
 
+    # An optional script to decide whether to open the Pull Request or not.
+    # If there is a new version of CIRCT, the action will run the provided
+    # script. A return value of 0 means "open the PR". A return value of 1
+    # means "do not open the PR". Any other return value will cause the action
+    # to exit with an error.
+    #
+    # Default: ''
+    should-create-pr: ''
+
     # A GitHub token with sufficient permissions to create Pull Requests
     #
     # Default: ${{ github.token }}

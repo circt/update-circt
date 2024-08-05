@@ -38,6 +38,15 @@ inputs:
       that this is a JSON object containing a key "version".
     type: string
     default: './etc/circt.json'
+  should-create-pr:
+    description: |
+      An optional script to decide whether to open the Pull Request or not.
+      If there is a new version of CIRCT, the action will run the provided
+      script. A return value of 0 means "open the PR". A return value of 1
+      means "do not open the PR". Any other return value will cause the action
+      to exit with an error.
+    type: string
+    default: ''
   github-token:
     description: |
       A GitHub token with sufficient permissions to create Pull Requests
@@ -86,6 +95,33 @@ runs:
         VERSION=$(git tag --list 'firtool-*' | tail -n1)
         echo version=$VERSION >> $GITHUB_OUTPUT
         echo Latest version is: \`$VERSION\` >> $GITHUB_STEP_SUMMARY
+    - name: Decide whether or not to open PR
+      id: open-pr
+      shell: bash
+      run: |
+        VERSION=${{ steps.get-version-latest.outputs.version }}
+        if [[ ${{ steps.get-version-current.outputs.version }} != "$VERSION" ]]; then
+          if [[ -n "${{ inputs.should-create-pr }}" ]]; then
+            if $(downstream/${{ inputs.should-create-pr }} "$VERSION"); then
+              RESULT="0"
+            else
+              RESULT=$?
+            fi
+          else
+            RESULT="0"
+          fi
+          if [[ "$RESULT" -eq "0" ]]; then
+            echo "result=yes" >> $GITHUB_OUTPUT
+          elif [[ "$RESULT" -eq "1" ]]; then
+            echo "::notice::User provided ${{ inputs.should-create-pr }} returned 1, skipping PR creation..."
+            echo "result=no" >> $GITHUB_OUTPUT
+          else
+            echo "::error::User provided ${{ inputs.should-create-pr }} returned $RESULT, aborting..."
+            exit 1
+          fi
+        else
+          echo "result=no" >> $GITHUB_OUTPUT
+        fi
 
     ############################################################################
     # The rest of this action handles bumping the CIRCT version if a new version
@@ -106,7 +142,7 @@ runs:
     # [2]: "base" is GitHub lingo for "the branch without your changes".
     ############################################################################
     - name: Create PR Metadata
-      if: steps.get-version-current.outputs.version != steps.get-version-latest.outputs.version
+      if: steps.open-pr.outputs.result == 'yes'
       shell: bash
       # Write a JSON object to the temporary file `metadata/metadata.json` that
       # contains information about what this job is going to do.  Populate four
@@ -223,7 +259,7 @@ runs:
     #
     # [3]: https://pandoc.org/
     - name: Generate PR Title
-      if: steps.get-version-current.outputs.version != steps.get-version-latest.outputs.version
+      if: steps.open-pr.outputs.result == 'yes'
       uses: docker://pandoc/core
       with:
         args: >-
@@ -234,7 +270,7 @@ runs:
           -o metadata/pr-title.md
           /dev/null
     - name: Generate PR Body
-      if: steps.get-version-current.outputs.version != steps.get-version-latest.outputs.version
+      if: steps.open-pr.outputs.result == 'yes'
       uses: docker://pandoc/core
       with:
         args: >-
@@ -245,7 +281,7 @@ runs:
           -o metadata/pr-body.md
           /dev/null
     - name: Generate Commit Message
-      if: steps.get-version-current.outputs.version != steps.get-version-latest.outputs.version
+      if: steps.open-pr.outputs.result == 'yes'
       uses: docker://pandoc/core
       with:
         args: >-
@@ -258,7 +294,7 @@ runs:
     # Print the populated pandoc templates to the GitHub Actions step summary.
     # (These will print on the "Summary" of a run of this Action.)
     - name: Show Metadata
-      if: steps.get-version-current.outputs.version != steps.get-version-latest.outputs.version
+      if: steps.open-pr.outputs.result == 'yes'
       shell: bash
       run: |
         echo "# PR Title" >> $GITHUB_STEP_SUMMARY
@@ -272,7 +308,7 @@ runs:
     # Using the information in the JSON Metadata, cherry-pick all commits from
     # the staging branch.
     - name: Cherry Pick Staging Branch Commits
-      if: steps.get-version-current.outputs.version != steps.get-version-latest.outputs.version
+      if: steps.open-pr.outputs.result == 'yes'
       shell: bash
       run: |
         cd downstream/
@@ -287,7 +323,7 @@ runs:
         done
     # Create unstaged changes that updates the CIRCT version to "latest".
     - name: Update Downstream Project to Latest Upstream Release
-      if: steps.get-version-current.outputs.version != steps.get-version-latest.outputs.version
+      if: steps.open-pr.outputs.result == 'yes'
       shell: bash
       run: |
         cd downstream/
@@ -306,7 +342,7 @@ runs:
       #
       # [4]: https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#multiline-strings
     - name: Setup Environment with Metadata
-      if: steps.get-version-current.outputs.version != steps.get-version-latest.outputs.version
+      if: steps.open-pr.outputs.result == 'yes'
       id: setup-env
       shell: bash
       run: |
@@ -322,7 +358,7 @@ runs:
     # Commit unstaged changes, create or update the PR, notify reviewers, and
     # add labels.
     - name: Create PR
-      if: steps.get-version-current.outputs.version != steps.get-version-latest.outputs.version
+      if: steps.open-pr.outputs.result == 'yes'
       id: create-pr
       uses: peter-evans/create-pull-request@v5
       with:
