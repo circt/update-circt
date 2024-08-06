@@ -7,7 +7,7 @@ binaries/libraries in a downstream project.
 
 ```yaml
 - name: Update CIRCT
-  uses: circt/update-circt@v1.0.0
+  uses: circt/update-circt@v1
   with:
     # The name that will be associated with any created commits
     user: ''
