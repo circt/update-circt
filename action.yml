@@ -362,7 +362,7 @@ runs:
     - name: Create PR
       if: steps.open-pr.outputs.result == 'true'
       id: create-pr
-      uses: peter-evans/create-pull-request@v5
+      uses: peter-evans/create-pull-request@v6
       with:
         path: downstream
         token: ${{ inputs.github-token }}
