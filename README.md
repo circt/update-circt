@@ -37,12 +37,14 @@ binaries/libraries in a downstream project.
     circt-config: ''
 
     # An optional script to decide whether to open the Pull Request or not.
-    # If there is a new version of CIRCT, the action will run the provided
-    # script. A return value of 0 means "open the PR". A return value of 1
-    # means "do not open the PR". Any other return value will cause the action
-    # to exit with an error.
+    # The script must accept a single positional argument (the new CIRCT
+    # version). The script is only run when there is a new version of CIRCT.  A
+    # return value of 0 means "open the PR". A return value of 1 means "do not
+    # open the PR". Any other return value will cause the action to exit with
+    # an error. Note, the default value 'true' is the shell built-in, not a
+    # boolean value.
     #
-    # Default: ''
+    # Default: 'true'
     should-create-pr: ''
 
     # A GitHub token with sufficient permissions to create Pull Requests
