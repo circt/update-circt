@@ -94,7 +94,7 @@ runs:
       shell: bash
       run: |
         cd circt/
-        VERSION=$(git tag --list 'firtool-*' | tail -n1)
+        VERSION=$(git tag --list 'firtool-*' | sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -n1)
         echo version=$VERSION >> $GITHUB_OUTPUT
         echo Latest version is: \`$VERSION\` >> $GITHUB_STEP_SUMMARY
     - name: Decide whether or not to open PR
